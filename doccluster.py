@@ -116,7 +116,6 @@ def preProcessingWords(words):
         for token in doc:
             if len(token.text) > 4:
                 if len(doc) == 1 and mot not in q.keys() and token.pos_ not in posForbidden:
-                    print(token.text, token.pos_)
                     q[mot] = count
                 if mot not in q.keys() and doc[0].pos_ not in posForbidden and doc[-1].pos_ not in posForbidden:
                     q[mot] = count
@@ -145,4 +144,22 @@ for i in range(1, 3):
     print(i)
 len(np.column_stack((list(work.keys()), list(work.values())))[:,0])
 
-np.array(work.keys()) == np.array([x for x in np.array(list(work.keys())) if len(x.split()) == 1])
+np.array(work)[np.where(np.array([x for x in np.array(list(work.keys())) if len(x.split()) == 1]))[0]]
+
+np.array(list(work.keys()))[np.where(np.array([x for x in np.array(list(work.keys())) if len(x.split()) == 1]))[0]]
+
+
+tata = [x for x in np.array(list(work.keys())) if len(x.split()) == 1]
+toto = max([ v for k,v in work.items() if k in tata])
+
+def getThreshold(dict_gram, gram, pourcent):
+    r = {}
+    for nbGram in range(gram):
+        t = [x for x in np.array(list(dict_gram.keys())) if len(x.split()) == nbGram + 1]
+        r[nbGram + 1] = int(max([ v for k,v in dict_gram.items() if k in t]) * (100 - pourcent) / 100)
+    return r
+
+
+getThreshold(work, 3, 80)
+getThreshold(preProcessingWords(work), 3, 80)
+q = preProcessingWords(work)
