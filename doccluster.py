@@ -1,6 +1,7 @@
 import numpy as np
 import docx
 import spacy
+import os
 from  nltk import everygrams, word_tokenize
 from nltk.corpus import stopwords
 import fr_core_news_md
@@ -23,7 +24,7 @@ def getText(filename):
     return '\n'.join(fullText)##.replace("\xa0", " ").replace("\n", " ")
 
 def getWords(text, mini=1, maxi=3):
-    return [' '.join(word).lower().strip() for word in list(everygrams(word_tokenize(texte, language='french'), min_len=mini, max_len=maxi))]
+    return [' '.join(word).lower().strip() for word in list(everygrams(word_tokenize(text, language='french'), min_len=mini, max_len=maxi))]
 # [x.text for x in doc if x.text not in ['(', ':',')', ';', '.' ,',','«', '»', '[',']', ' ', '-', '/', '?', '<', '>']]
 def countWord(tab):
     allWords = list(set(tab))
@@ -38,7 +39,7 @@ def _countVectorizer(text, gram=1):
         X = vectorizer.fit_transform(text)
     else:
         X = vectorizer.fit_transform([text])
-    return sortDict(dict(zip(vectorizer.get_feature_names(), X.toarray()[0])))
+        return {k: v for k, v in sortDict(dict(zip(vectorizer.get_feature_names(), X.toarray()[0]))).items() if v != 1}
 
 def _tfidfVectorizer(text, gram=1):
     vectorizer = TfidfVectorizer(ngram_range=(1,gram)) # , stop_words=set(stopwords.words('french'))
@@ -48,109 +49,19 @@ def _tfidfVectorizer(text, gram=1):
         X = vectorizer.fit_transform([text])
     return sortDict(dict(zip(vectorizer.get_feature_names(), X.toarray()[0])))
 
-"""
-def _tfidfVectorizer(text, vocabulary):
-    vectorizer = TfidfVectorizer(vocabulary=vocabulary)
-    if type(text) == list:
-        X = vectorizer.fit_transform(text)
-    else:
-        X = vectorizer.fit_transform([text])
-    return sortDict(dict(zip(vectorizer.get_feature_names(), X.toarray()[0])))
-"""
-
-texte = getText("X:/Projets/Intelligence Artificielle/Workspace/Data/AC6_CIR 14_Synthèse01_Workbench 4 Linux_vFI.docx")
-mots = getWords(texte, 1, 3)
-
-a = _countVectorizer(texte, 3)
-
-
-r = []
-posForbidden = ['ADP', 'DET', 'CCONJ', 'X', 'ADV', 'AUX', 'PUNCT', 'NUM', 'VERB', 'PRON']
-for index, mot in enumerate(a.keys()):
-    
-    doc = nlp(mot)
-    m = []
-    for token in doc:
-        if len(token.text) > 4:
-            if len(doc) == 1 and mot not in r and token.pos_ not in posForbidden:
-                """
-                print("je suis le mot " + mot)
-                print(token.text, token.pos_)
-                """
-                r.append(mot)
-            if mot not in r and doc[0].pos_ not in posForbidden and doc[-1].pos_ not in posForbidden:
-                r.append(mot)            
-
-
-
-for a, b in a.items():
-    print(a, b)
-
-q = {}
-posForbidden = ['ADP', 'DET', 'CCONJ', 'X', 'ADV', 'AUX', 'PUNCT', 'NUM', 'VERB', 'PRON']
-for mot, count in a.items():
-    doc = nlp(mot)
-    m = []
-    for token in doc:
-        if len(token.text) > 4:
-            if len(doc) == 1 and mot not in q.keys() and token.pos_ not in posForbidden:
-                """
-                print("je suis le mot " + mot)
-                print(token.text, token.pos_)
-                """
-                q[mot] = count
-            if mot not in q.keys() and doc[0].pos_ not in posForbidden and doc[-1].pos_ not in posForbidden:
-                q[mot] = count
-return q
-
-r == list(q.keys())
-
-q = preProcessingWords(a)
-qq = preProcessingWords(toto)
-
 def preProcessingWords(words):
     q = {}
-    posForbidden = ['ADP', 'DET', 'CCONJ', 'X', 'ADV', 'AUX', 'PUNCT', 'NUM', 'VERB', 'PRON']
+    posForbidden = ['ADP', 'DET', 'CCONJ', 'X', 'ADV', 'AUX', 'PUNCT', 'NUM', 'VERB', 'PRON', 'SCONJ']
     for mot, count in words.items():
         doc = nlp(mot)
         for token in doc:
             if len(token.text) > 4:
-                if len(doc) == 1 and mot not in q.keys() and token.pos_ not in posForbidden:
+                if len(doc) == 1 and mot not in q.keys() and token.pos_ not in posForbidden + ['ADJ']:
                     q[mot] = count
-                if mot not in q.keys() and doc[0].pos_ not in posForbidden and doc[-1].pos_ not in posForbidden:
+                if mot not in q.keys() and doc[0].pos_ not in posForbidden + ['ADJ'] and doc[-1].pos_ not in posForbidden:
                     q[mot] = count
     return q
 
-
-
-toto = _tfidfVectorizer(texte, 3)
-
-
-class DocCluster:
-    def __init__(self, pathname, gram=3):
-        self.pathname = pathname
-        self.gram = gram
-        self.text = getText(self.pathname)
-        self.words = getWords(self.text, 1, self.gram)
-        self.ngram = _countVectorizer(self.text, self.gram)
-        
-        
-
-x = DocCluster("X:/Projets/Intelligence Artificielle/Workspace/Data/AC6_CIR 14_Synthèse01_Workbench 4 Linux_vFI.docx")
-
-work = x.ngram
-
-for i in range(1, 3):
-    print(i)
-len(np.column_stack((list(work.keys()), list(work.values())))[:,0])
-
-np.array(work)[np.where(np.array([x for x in np.array(list(work.keys())) if len(x.split()) == 1]))[0]]
-
-np.array(list(work.keys()))[np.where(np.array([x for x in np.array(list(work.keys())) if len(x.split()) == 1]))[0]]
-
-
-tata = [x for x in np.array(list(work.keys())) if len(x.split()) == 1]
-toto = max([ v for k,v in work.items() if k in tata])
 
 def getThreshold(dict_gram, gram, pourcent):
     r = {}
@@ -160,6 +71,119 @@ def getThreshold(dict_gram, gram, pourcent):
     return r
 
 
-getThreshold(work, 3, 80)
-getThreshold(preProcessingWords(work), 3, 80)
-q = preProcessingWords(work)
+def bestNgram(ngrams, threshold):
+    r = {}
+    for key, value in ngrams.items(): 
+        if value > threshold[len(key.split())]:
+            r[key] = value
+    return r
+
+def getAllDocs(pathname):
+    corpus = []
+    for file in os.listdir(path):
+        try:
+            corpus.append(DocCluster(pathname + file))
+            print(file + " done")
+        except:
+            print("Error file " + file)
+    return corpus
+
+
+def getAllKeys(self):
+    d = {}
+    for corpus in monCorpus.texts:
+        for key, value in corpus.bestNGrams.items():
+            if key in d.keys():
+                d[key] += value
+            else:
+                d[key] = value
+    return sortDict(d)
+
+
+class DocCluster:
+    def __init__(self, pathname, gram=3, threshold=80):
+        self.pathname = pathname
+        self.gram = gram
+        self.text = getText(self.pathname)
+        self.words = getWords(self.text, 1, self.gram)
+        self.ngram = _countVectorizer(self.text, self.gram)
+        self.threshold = getThreshold(self.ngram, self.gram, threshold)
+        self.bestNGrams = bestNgram(preProcessingWords(self.ngram), self.threshold)
+
+
+class Corpus:
+    def __init__(self, path):
+        self.pathname = path
+        self.texts = getAllDocs(self.pathname)
+        self.allKeys = None
+        self.getAllKeys()
+        
+    def getAllKeys(self):
+        d = {}
+        for corpus in self.texts:
+            for key, value in corpus.bestNGrams.items():
+                if key in d.keys():
+                    d[key] += 1
+                else:
+                    d[key] = 1
+        self.allKeys = sortDict(d)
+
+path = "X:/Projets/Intelligence Artificielle/Workspace/Data/"
+debut = time.time()
+monCorpus = Corpus(path)
+print((time.time() - debut) / 60)
+x = DocCluster("X:/Projets/Intelligence Artificielle/Workspace/Data/AC6_CIR 14_Synthèse01_Workbench 4 Linux_vFI.docx")
+
+def getTF(allKeys, wordCount):
+    r = [0] * len(allKeys)
+    for word, count in wordCount.items():
+        r[list(allKeys.keys()).index(word)] = count / float(len(wordCount))
+    return r
+
+# map(lambda p: myFunc(p, additionalArgument), pages)
+
+allKeys = {}
+for doc in corpus:
+    for newKey in doc.bestNGrams.keys():
+        if newKey in allKeys.keys():
+            allKeys[newKey] += 1
+        else:
+            allKeys[newKey] = 1
+print(allKeys)
+
+debut = time.time()
+allKeys = {}
+for doc in monCorpus.texts:
+    for newKey in doc.bestNGrams.keys():
+        if newKey in allKeys.keys():
+            allKeys[newKey] += 1
+        else:
+            allKeys[newKey] = 1
+print(allKeys)
+print((time.time() - debut) / 60)
+
+debut = time.time()
+allTF = []
+for doc in monCorpus.texts:
+    allTF.append(getTF(allKeys, doc.bestNGrams))
+print((time.time() - debut) / 60)
+
+getTF(allKeys, doc.bestNGrams)
+monCorpus.texts[0].bestNGrams
+
+
+debut = time.time()
+allTexte = []
+for doc in monCorpus.texts:
+    allTexte.append(doc.text)
+print((time.time() - debut) / 60)
+
+countVectorizer = CountVectorizer(ngram_range=(2,2))
+X = countVectorizer.fit_transform(allTexte)
+countVectorizerData = X.toarray()
+countVectorizerNames = countVectorizer.get_feature_names()
+
+tfidfVectorizer = TfidfVectorizer(ngram_range=(2,2))
+X = tfidfVectorizer.fit_transform(allTexte)
+tfidfVectorizerData = X.toarray()
+tfidfVectorizerNames = tfidfVectorizer.get_feature_names()
