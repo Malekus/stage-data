@@ -126,28 +126,34 @@ def myLDA(docs, topic):
     dwt = assignTopicDoc(ptd)
     pwt = getProbaWordTopic(dwwt, topic)
     moyenne = 0
-    
-    while(moyenne < 98):
+    while(moyenne < 0.98):
         npt = getNewProbTopic(ptd, pwt, dwwt, topic)
-        moyenne = sum(np.array(list(getValuesToDict(assignTopicDoc(ptd)))) == np.array(list(getValuesToDict(assignTopicDoc(npt)))))
+        moyenne = sum(np.array(list(getValuesToDict(assignTopicDoc(ptd)))) == np.array(list(getValuesToDict(assignTopicDoc(npt))))) / len(docs)
         ptd = npt
-        print(moyenne)
-        
-    return moyenne#npt
+        dwt = assignTopicDoc(npt)
+        dwwt = assignTopicDocToWords(dwt, dwwt)
+    return npt
     
-myLDA(docs, range(5))
+lda = myLDA(docs, range(5))
 
- 
+label = assignTopicDoc(lda)
 
-sum(np.array(list(assignTopicWordByProb(getProbTopicDoc(docsWithWordTopied, themes)).values())) == np.array(list(assignTopicWordByProb(new).values()))) / 100
-getValuesToDict(new.values())
+def assignTopicDocToWords(docs, words):
+    r = {}
+    for doc, topic in docs.items():
+        r[doc] = {key: topic for key in words[doc].keys()}
+    return r
+    
 
+def getBestWordLDA(labels, words):
+    r = {}
+    for doc, topic in labels.items():
+        if topic not in r.keys():
+            r[topic] = []
+        for word, label  in words[doc].items():
+            if topic == label:
+                r[topic].append(word)
+    return r
 
-dwwt = setDocsThemeWord(docs, 2)
-ptd = getProbTopicDoc(dwwt, themes)
-dwt = assignTopicDoc(ptd)
-pwt = getProbaWordTopic(dwwt, themes)
-npt = getNewProbTopic(ptd, pwt, dwwt, themes)
-moyenne = sum(np.array(list(getValuesToDict(assignTopicDoc(ptd)))) == np.array(list(getValuesToDict(assignTopicDoc(npt)))))
-npt2 = getNewProbTopic(npt, pwt, dwwt, themes)
-moyenne = sum(np.array(list(getValuesToDict(assignTopicDoc(npt2)))) == np.array(list(getValuesToDict(assignTopicDoc(npt)))))
+    
+getBestWordLDA(label, docsWithWordTopied)

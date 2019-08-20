@@ -106,9 +106,10 @@ class DocCluster:
         self.gram = gram
         self.text = getText(self.pathname)
         self.words = getWords(self.text, 1, self.gram)
-        self.ngram = _countVectorizer(self.text, self.gram)
+        self.ngram = preProcessingWords(_countVectorizer(self.text, self.gram))
         self.threshold = getThreshold(self.ngram, self.gram, threshold)
-        self.bestNGrams = bestNgram(preProcessingWords(self.ngram), self.threshold)
+        self.bestNGrams = bestNgram(self.ngram, self.threshold)
+        
 
 
 class Corpus:
