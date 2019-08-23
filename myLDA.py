@@ -5,6 +5,7 @@ from itertools import combinations
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.metrics.pairwise import cosine_similarity
+import time
 
 def makeDict(a,b):
     return dict(zip(a, b))
@@ -48,6 +49,9 @@ def setDocsThemeWord(docs, d=1, themes=5):
             r["Doc" + str(index)] = dict(map(setThemeWord2,doc))
     return r
 
+
+
+
 #Calcul la probabilite d'un theme par rapport au doc
 def getProbTopicDoc(docs, themes):
     r = {}
@@ -72,7 +76,7 @@ def setSumTopic(docs, topics):
     return r
 
 # Compte le nombre de mot dans chaque theme
-def getCountWordTopic(docs, theme):
+def getCountWordTopic(docs, themes):
     r = {}
     for doc, wordTopic in docs.items():
         for w, t in wordTopic.items():
@@ -80,7 +84,7 @@ def getCountWordTopic(docs, theme):
                 r[w] = { theme: 0 for theme in themes}
             r[w][t] += 1
     return r
-
+ 
 #Calculer la probabilite qu'un mot soit dans un theme
 def getProbaWordTopic(docs, themes):
     r = {}
@@ -145,7 +149,7 @@ def myLDA(docs, themes):
         probWords = getProbaWordTopic(docsSet, themes)
         labelDocs = newAssignTopic
         
-    return newAssignTopic
+    return newAssignTopic, docsSet
 
 def getAllWords(docs):
     r = []
@@ -198,3 +202,58 @@ sum(calculSimiliraty(y, data, [i for i in range(4)])) * 4
 
 z = myLDA(docs, [i for i in range(3)])
 sum(calculSimiliraty(z, data, [i for i in range(3)])) * 3
+
+r = {}
+for i in range(2, 100):
+    x = myLDA(docs, [i for i in range(i)])
+    r[i] = sum(calculSimiliraty(x, data, [i for i in range(i)])) * i
+
+def countCombination(combinations):
+    return [len(c) + 1 for c in combinations]
+
+x = myLDA(docs, [i for i in range(5)])
+docIndex = getDocIndex(x, [i for i in range(5)])
+allC = getAllCombiDocIndex(docIndex)
+
+debut = time.time()
+mean = {nbTopic: 0 for  nbTopic in range(2, 20)}
+for i in range(10):    
+    a = {}
+    for nbTopic in range(2, 20):
+        x = myLDA(docs, [i for i in range(nbTopic)])
+        docIndex = getDocIndex(x, [i for i in range(nbTopic)])
+        allC = getAllCombiDocIndex(docIndex)
+        print(sum(np.array(calculSimiliraty(x, data, [i for i in range(nbTopic)])) / np.array(countCombination(allC))) / nbTopic)
+        a[nbTopic] = sum(np.array(calculSimiliraty(x, data, [i for i in range(nbTopic)])) / np.array(countCombination(allC))) / nbTopic
+    mean.append(a)
+print(time.time() - debut)
+
+def getBestTheme(docs, max_itr=10, max_theme=10):
+    mean = {nbTopic: 0 for nbTopic in range(2, max_theme)}
+    for _ in range(max_itr):
+        for nbTopic in range(2, max_theme):
+            themes = [i for i in range(nbTopic)]
+            x = myLDA(docs, themes)[0]
+            docIndex = getDocIndex(x, themes)
+            allC = getAllCombiDocIndex(docIndex)
+            mean[nbTopic] += (sum(1 + np.array(calculSimiliraty(x, data, themes)) / np.array(countCombination(allC))) / nbTopic)
+    return mean
+
+getBestTheme(docs)
+
+x = myLDA(docs, themes)
+docIndex = getDocIndex(x, themes)
+allC = getAllCombiDocIndex(docIndex)
+(sum(1 + np.array(calculSimiliraty(x, data, themes)) / np.array(countCombination(allC))) / nbTopic)
+
+themesDocs = {theme: {} for theme in themes}
+
+for doc in x[1].values():
+    for word, topic in doc.items():
+        if word not in themesDocs[topic].keys():
+            themesDocs[topic][word] = 1
+        else:
+            themesDocs[topic][word] += 1
+
+for k in range(len(themesDocs)):
+    print(list(sortDictDesc(themesDocs[k]).keys())[0:20])
